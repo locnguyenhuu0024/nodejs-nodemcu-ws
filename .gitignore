@@ -1,0 +1,10 @@
+# NodeJS
+node_modules/
+.env
+
+# Arduino
+nodemcu-ws/config.h
+
+# IDE
+.vscode/
+.idea/
