@@ -45,28 +45,60 @@ wss.on("connection", (ws) => {
 
 // API endpoints
 app.post("/api/control", (req, res) => {
-  const { command, value } = req.body;
+  const { command, value, angle } = req.body;
 
-  // Validate command và value
-  if (command !== "LED_CONTROL" || !["ON", "OFF"].includes(value)) {
-    return res.status(400).json({
-      success: false,
-      message: "Invalid command or value. Use LED_CONTROL with ON/OFF value",
+  // Validate command và value cho LED_CONTROL
+  if (command === "LED_CONTROL") {
+    if (!["ON", "OFF"].includes(value)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid value for LED_CONTROL. Use ON/OFF",
+      });
+    }
+
+    // Gửi command tới tất cả clients
+    const message = JSON.stringify({ command, value });
+    clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(message);
+      }
+    });
+
+    return res.json({
+      success: true,
+      message: `LED ${value === "ON" ? "turned on" : "turned off"}`,
+    });
+  } 
+  // Validate command và angle cho SERVO_CONTROL
+  else if (command === "SERVO_CONTROL") {
+    // Kiểm tra angle có phải là số và nằm trong khoảng 0-180
+    const servoAngle = parseInt(angle);
+    if (isNaN(servoAngle) || servoAngle < 0 || servoAngle > 180) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid angle for SERVO_CONTROL. Use a number between 0-180",
+      });
+    }
+
+    // Gửi command tới tất cả clients
+    const message = JSON.stringify({ command, angle: servoAngle });
+    clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(message);
+      }
+    });
+
+    return res.json({
+      success: true,
+      message: `Servo moved to angle: ${servoAngle}`,
     });
   }
-
-  // Gửi command tới tất cả clients
-  const message = JSON.stringify({ command, value });
-  clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(message);
-    }
-  });
-
-  res.json({
-    success: true,
-    message: `LED ${value === "ON" ? "turned on" : "turned off"}`,
-  });
+  else {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid command. Use LED_CONTROL or SERVO_CONTROL",
+    });
+  }
 });
 
 app.get("/api/status", (req, res) => {

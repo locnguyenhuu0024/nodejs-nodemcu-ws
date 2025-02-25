@@ -94,11 +94,11 @@ void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
     if (!error)
     {
       const char *command = doc["command"];
-      const char *value = doc["value"];
-
+      
       // Xử lý lệnh điều khiển LED
       if (strcmp(command, "LED_CONTROL") == 0)
       {
+        const char *value = doc["value"];
         if (strcmp(value, "ON") == 0)
         {
           digitalWrite(LED, HIGH);
@@ -108,6 +108,31 @@ void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
         {
           digitalWrite(LED, LOW);
           Serial.println("LED turned OFF");
+        }
+      }
+      // Thêm xử lý lệnh điều khiển servo
+      else if (strcmp(command, "SERVO_CONTROL") == 0)
+      {
+        int angle = doc["angle"];
+        // Đảm bảo góc nằm trong khoảng hợp lệ
+        if (angle >= 0 && angle <= 180)
+        {
+          servo1.write(angle);
+          Serial.print("Servo moved to angle: ");
+          Serial.println(angle);
+          
+          // Gửi phản hồi về trạng thái servo
+          doc.clear();
+          doc["type"] = "servo_status";
+          doc["angle"] = angle;
+          
+          message = "";
+          serializeJson(doc, message);
+          webSocket.sendTXT(message);
+        }
+        else
+        {
+          Serial.println("Invalid servo angle");
         }
       }
     }
@@ -143,7 +168,11 @@ void setup()
   setup_wifi();
   pinMode(LED, OUTPUT);
   setUpCamBien();
-
+  
+  // Khởi tạo servo
+  servo1.attach(servo1Pin);
+  servo1.write(90); // Đặt servo về vị trí giữa khi khởi động
+  
   // Cấu hình WebSocket
   webSocket.begin(ws_server, ws_port, "/");
   webSocket.onEvent(webSocketEvent);
