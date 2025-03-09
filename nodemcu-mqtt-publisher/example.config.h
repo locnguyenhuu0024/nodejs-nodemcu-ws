@@ -16,6 +16,12 @@
 
 // MQTT Broker config - Thay đổi thông tin MQTT broker của bạn
 #define MQTT_SERVER "192.168.1.100"  // Địa chỉ IP hoặc tên miền của MQTT broker
+
+// Các broker MQTT công cộng (bỏ comment để sử dụng)
+//#define MQTT_SERVER "broker.emqx.io"     // EMQX broker công cộng
+//#define MQTT_SERVER "broker.hivemq.com"  // HiveMQ broker công cộng
+//#define MQTT_SERVER "test.mosquitto.org" // Mosquitto broker công cộng
+
 #define MQTT_PORT 1883               // Cổng MQTT broker (thường là 1883)
 #define MQTT_USER ""                 // Tên người dùng MQTT (để trống nếu không cần xác thực)
 #define MQTT_PASSWORD ""             // Mật khẩu MQTT (để trống nếu không cần xác thực)
@@ -33,7 +39,8 @@
 
 // Cấu hình thời gian
 #define SEND_INTERVAL 2000           // Gửi dữ liệu mỗi 2 giây
-#define RECONNECT_INTERVAL 5000      // Thử kết nối lại mỗi 5 giây
+#define RECONNECT_INTERVAL 5000      // Thử kết nối lại MQTT mỗi 5 giây
+#define MQTT_CONNECT_TIMEOUT 10000   // Timeout kết nối MQTT (10 giây)
 
 /*
  * Gỡ lỗi kết nối MQTT:
