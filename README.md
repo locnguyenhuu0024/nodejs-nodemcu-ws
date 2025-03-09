@@ -1,142 +1,126 @@
-# NodeJS-NodeMCU WebSocket Project
+# NodeMCU ESP8266 MQTT Sensor API
 
-A project demonstrating WebSocket communication between a NodeJS server and NodeMCU, with LED control functionality.
+Hệ thống thu thập dữ liệu từ các cảm biến kết nối với NodeMCU ESP8266 thông qua MQTT và cung cấp API để truy cập dữ liệu.
 
-## Project Structure / Cấu trúc dự án
+## Cấu trúc dự án
 
+```
 nodejs-nodemcu-ws/
+├── arduino-esp8266/
+│   └── arduino-esp8266.ino    # Code Arduino cho NodeMCU ESP8266
 ├── api-server/
-│ ├── .env
-│ ├── package.json
-│ ├── server.js
-│ └── postman_collection.json
-└── nodemcu-ws/
-└── nodemcu-ws.ino
+│   ├── server.js              # API server Node.js
+│   ├── package.json           # Cấu hình npm
+│   └── .env                   # Cấu hình môi trường
+└── mqtt-broker/               # Thư mục chứa các file liên quan đến MQTT broker
+    ├── README.md              # Hướng dẫn cài đặt và sử dụng MQTT broker
+    ├── install.sh             # Script cài đặt tự động
+    ├── mosquitto.conf         # File cấu hình Mosquitto
+    ├── mqtt-start.sh          # Script khởi động MQTT broker
+    └── mqtt-stop.sh           # Script dừng MQTT broker
+```
 
-## Requirements / Yêu cầu
+## Cảm biến được sử dụng
 
-Hardware / Phần cứng:
+- DHT11/DHT22 (nhiệt độ và độ ẩm): kết nối với pin D5
+- Cảm biến ánh sáng: kết nối với pin A0
+- Cảm biến chuyển động PIR: kết nối với pin D4
 
-- NodeMCU ESP8266
-- LED
-- Resistor 220Ω
-- Jumper wires
+## Cài đặt
 
-Software / Phần mềm:
+### 1. Cài đặt MQTT Broker
 
-- Node.js (v12 or later)
-- Arduino IDE
-- Postman (for testing)
+Xem hướng dẫn chi tiết trong thư mục [mqtt-broker](mqtt-broker/README.md).
 
-Arduino Libraries / Thư viện Arduino:
+Cài đặt nhanh trên Ubuntu:
+```bash
+cd mqtt-broker
+sudo ./install.sh
+```
 
-- ESP8266WiFi
-- WebSocketsClient
-- ArduinoJson
+### 2. Cài đặt code cho NodeMCU ESP8266
 
-## Arduino IDE Setup / Cài đặt Arduino IDE
+1. Mở Arduino IDE
+2. Cài đặt các thư viện cần thiết:
+   - Vào "Sketch" > "Include Library" > "Manage Libraries..."
+   - Tìm kiếm và cài đặt các thư viện sau:
+     - "DHT sensor library" (thường là thư viện của Adafruit)
+     - "PubSubClient" (thư viện MQTT cho ESP8266)
+     - "ArduinoJson" (phiên bản 6.x)
+3. Mở file `arduino-esp8266/arduino-esp8266.ino`
+4. Cập nhật thông tin WiFi và MQTT broker:
+   ```cpp
+   const char* ssid = "YOUR_WIFI_SSID";       // Thay đổi thành tên WiFi của bạn
+   const char* password = "YOUR_WIFI_PASSWORD"; // Thay đổi thành mật khẩu WiFi của bạn
+   const char* mqtt_server = "192.168.1.X"; // Thay X bằng địa chỉ IP thực tế của máy Ubuntu
+   ```
+5. Tải code lên NodeMCU ESP8266
 
-1. Add ESP8266 board support / Thêm hỗ trợ ESP8266:
+### 3. Cài đặt API Server
 
-   - Open File > Preferences
-   - Add URL to "Additional Boards Manager URLs":
-     http://arduino.esp8266.com/stable/package_esp8266com_index.json
-   - Go to Tools > Board > Boards Manager
-   - Install "ESP8266 by ESP8266 Community"
-
-2. Install required libraries / Cài đặt thư viện:
-
-   - Go to Tools > Manage Libraries
-   - Search and install:
-     - "WebSockets" by Markus Sattler
-     - "ArduinoJson" by Benoit Blanchon
-
-3. Configure board / Cấu hình board:
-   - Select Tools > Board > NodeMCU 1.0 (ESP-12E Module)
-   - Set:
-     - Upload Speed: 115200
-     - CPU Frequency: 80MHz
-     - Flash Size: 4MB (FS:2MB OTA:~1019KB)
-     - Port: Select your NodeMCU COM port
-
-## Setup & Installation / Cài đặt
-
-API Server:
-
-1. Install dependencies / Cài đặt thư viện:
+1. Đảm bảo đã cài đặt Node.js (phiên bản 14.x trở lên) và npm
+2. Di chuyển đến thư mục api-server:
+   ```
    cd api-server
+   ```
+3. Cài đặt các phụ thuộc:
+   ```
    npm install
-
-2. Configure environment / Cấu hình môi trường:
-
-   - Copy .env.example to .env
-   - Update settings in .env:
-     PORT=3000
-     MQTT_BROKER=mqtt://your-broker-ip:1883
-
-3. Start server / Khởi động server:
+   ```
+4. Cấu hình file `.env` (đã được tự động cập nhật bởi script mqtt-start.sh)
+5. Khởi động server:
+   ```
    npm start
+   ```
 
-NodeMCU:
+## API Endpoints
 
-1. Connect hardware / Kết nối phần cứng:
+- `GET /api/sensors`: Lấy tất cả dữ liệu cảm biến
+- `GET /api/status`: Kiểm tra trạng thái kết nối
+- `GET /api/sensors/temperature`: Lấy dữ liệu nhiệt độ
+- `GET /api/sensors/humidity`: Lấy dữ liệu độ ẩm
+- `GET /api/sensors/light`: Lấy dữ liệu ánh sáng
+- `GET /api/sensors/motion`: Lấy dữ liệu chuyển động
+- `POST /api/simulation`: Bật/tắt chế độ giả lập
 
-   - Connect LED to D1 pin (with 220Ω resistor)
-   - Connect NodeMCU to computer via USB
+## Ví dụ phản hồi API
 
-2. Configure WiFi / Cấu hình WiFi:
+```json
+// GET /api/sensors
+{
+  "temperature": 28.5,
+  "humidity": 65.2,
+  "light": 512,
+  "motion": true,
+  "timestamp": "2023-06-15T08:30:45.123Z",
+  "isConnected": true
+}
+```
 
-   - Update ssid and password in nodemcu-ws.ino
-   - Update ws_server with your API server IP address
+## Chế độ giả lập
 
-3. Upload code / Nạp code:
-   - Open nodemcu-ws.ino in Arduino IDE
-   - Select correct board and port
-   - Upload code to NodeMCU
+Hệ thống hỗ trợ chế độ giả lập để kiểm thử API mà không cần kết nối với phần cứng thực tế. Để bật chế độ giả lập, đặt `SIMULATION_MODE=true` trong file `.env` hoặc sử dụng API:
 
-## Testing / Kiểm thử
+```
+POST /api/simulation
+Content-Type: application/json
 
-1. Import Postman Collection / Import collection Postman:
+{
+  "enabled": true
+}
+```
 
-   - Import api-server/postman_collection.json to Postman
+## Xử lý sự cố
 
-2. Available endpoints / Các endpoint có sẵn:
-   - GET /api/status: Check server status / Kiểm tra trạng thái server
-   - POST /api/control: Control LED / Điều khiển LED
-     Turn ON: {"command": "LED_CONTROL", "value": "ON"}
-     Turn OFF: {"command": "LED_CONTROL", "value": "OFF"}
+1. **Không thể kết nối với MQTT broker**:
+   - Kiểm tra xem MQTT broker đã được cài đặt và đang chạy
+   - Kiểm tra cấu hình MQTT trong file `.env` và arduino-esp8266.ino
+   - Kiểm tra tường lửa có chặn cổng 1883 không
 
-## Circuit Diagram / Sơ đồ mạch
+2. **NodeMCU không kết nối được với WiFi**:
+   - Kiểm tra thông tin WiFi trong arduino-esp8266.ino
+   - Đảm bảo NodeMCU nằm trong phạm vi của WiFi
 
-NodeMCU ESP8266 | LED
-D1 (GPIO5) ---|>|--- 220Ω ---GND
-
-## Features / Tính năng
-
-- Real-time WebSocket communication / Giao tiếp WebSocket thời gian thực
-- LED control through REST API / Điều khiển LED qua REST API
-- Auto-reconnect on connection loss / Tự động kết nối lại khi mất kết nối
-- Status monitoring / Giám sát trạng thái
-
-## Troubleshooting / Xử lý sự cố
-
-1. If NodeMCU can't connect / Nếu NodeMCU không kết nối được:
-
-   - Check WiFi credentials / Kiểm tra thông tin WiFi
-   - Verify server IP and port / Xác nhận IP và port của server
-   - Check serial monitor for debug info / Xem thông tin debug trong serial monitor
-
-2. If LED doesn't respond / Nếu LED không phản hồi:
-   - Verify LED polarity / Kiểm tra cực của LED
-   - Check pin connections / Kiểm tra kết nối chân
-   - Verify WebSocket connection status / Kiểm tra trạng thái kết nối WebSocket
-
-## License / Giấy phép
-
-MIT License
-
-## Contributing / Đóng góp
-
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
-
-Chào mừng các pull request. Với những thay đổi lớn, vui lòng mở issue trước để thảo luận về những gì bạn muốn thay đổi.
+3. **Lỗi khi cài đặt các phụ thuộc Node.js**:
+   - Đảm bảo đã cài đặt Node.js phiên bản mới nhất
+   - Thử xóa thư mục node_modules và file package-lock.json, sau đó chạy lại `npm install`

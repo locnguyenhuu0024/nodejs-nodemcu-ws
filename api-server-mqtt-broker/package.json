@@ -1,0 +1,29 @@
+{
+  "name": "nodemcu-api-server",
+  "version": "1.0.0",
+  "description": "API Server để giao tiếp với NodeMCU qua MQTT và cung cấp dữ liệu cảm biến",
+  "main": "server.js",
+  "scripts": {
+    "start": "nodemon server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": [
+    "mqtt",
+    "iot",
+    "api",
+    "nodemcu",
+    "esp8266",
+    "sensors"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2",
+    "mqtt": "^5.3.5",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.3"
+  }
+}

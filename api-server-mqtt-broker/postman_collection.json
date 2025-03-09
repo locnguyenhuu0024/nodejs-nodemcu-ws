@@ -1,0 +1,224 @@
+{
+  "info": {
+    "_postman_id": "a5e7b8c9-d0e1-4f23-a456-789b0c1d2e3f",
+    "name": "NodeMCU ESP8266 MQTT Sensor API",
+    "description": "Collection for testing the NodeMCU ESP8266 MQTT Sensor API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Status",
+      "item": [
+        {
+          "name": "Get Connection Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/status",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "status"
+              ]
+            },
+            "description": "Kiểm tra trạng thái kết nối với NodeMCU"
+          },
+          "response": []
+        },
+        {
+          "name": "Toggle Simulation Mode (ON)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"enabled\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/simulation",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "simulation"
+              ]
+            },
+            "description": "Bật chế độ giả lập"
+          },
+          "response": []
+        },
+        {
+          "name": "Toggle Simulation Mode (OFF)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"enabled\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/simulation",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "simulation"
+              ]
+            },
+            "description": "Tắt chế độ giả lập và kết nối MQTT"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints để kiểm tra trạng thái kết nối"
+    },
+    {
+      "name": "Sensors",
+      "item": [
+        {
+          "name": "Get All Sensor Data",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/sensors",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "sensors"
+              ]
+            },
+            "description": "Lấy dữ liệu từ tất cả các cảm biến"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Temperature Data",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/sensors/temperature",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "sensors",
+                "temperature"
+              ]
+            },
+            "description": "Lấy dữ liệu nhiệt độ từ cảm biến DHT"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Humidity Data",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/sensors/humidity",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "sensors",
+                "humidity"
+              ]
+            },
+            "description": "Lấy dữ liệu độ ẩm từ cảm biến DHT"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Light Sensor Data",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/sensors/light",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "sensors",
+                "light"
+              ]
+            },
+            "description": "Lấy dữ liệu từ cảm biến ánh sáng"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Motion Sensor Data",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/sensors/motion",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "sensors",
+                "motion"
+              ]
+            },
+            "description": "Lấy dữ liệu từ cảm biến chuyển động PIR"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints để lấy dữ liệu từ các cảm biến"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3001",
+      "type": "string",
+      "description": "Base URL của API server"
+    }
+  ]
+}

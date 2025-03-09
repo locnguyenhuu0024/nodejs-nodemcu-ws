@@ -3,15 +3,11 @@
 #include <ArduinoJson.h>
 #include "config.h"
 #include <Ticker.h>
-#include <Servo.h>
 
 // Declare PIN
 #define LED D0
 #define HONGNGOAI D1
 #define ANHSANG A0
-
-#define servo1Pin D4
-Servo servo1;
 
 // Declare value
 int hongNgoai = LOW;
@@ -26,6 +22,7 @@ const char *password = WIFI_PASSWORD;
 // WebSocket server
 const char *ws_server = WS_SERVER;
 const int ws_port = WS_PORT;
+const char *ws_path = "/nodemcu"; // Đường dẫn WebSocket cho NodeMCU
 
 WebSocketsClient webSocket;
 bool isConnected = false;
@@ -35,6 +32,9 @@ Ticker sensorTicker;
 volatile int lastHongNgoai = LOW;
 volatile int lastAnhSang = 0;
 volatile bool hasNewData = false;
+
+// Thêm biến để theo dõi trạng thái LED
+bool ledState = false;
 
 void setUpCamBien()
 {
@@ -78,6 +78,8 @@ void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
     doc.clear();
     doc["type"] = "status";
     doc["status"] = "online";
+    doc["device"] = "nodemcu";
+    doc["led"] = ledState ? "ON" : "OFF";
 
     message = "";
     serializeJson(doc, message);
@@ -102,38 +104,48 @@ void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
         if (strcmp(value, "ON") == 0)
         {
           digitalWrite(LED, HIGH);
+          ledState = true;
           Serial.println("LED turned ON");
-        }
-        else if (strcmp(value, "OFF") == 0)
-        {
-          digitalWrite(LED, LOW);
-          Serial.println("LED turned OFF");
-        }
-      }
-      // Thêm xử lý lệnh điều khiển servo
-      else if (strcmp(command, "SERVO_CONTROL") == 0)
-      {
-        int angle = doc["angle"];
-        // Đảm bảo góc nằm trong khoảng hợp lệ
-        if (angle >= 0 && angle <= 180)
-        {
-          servo1.write(angle);
-          Serial.print("Servo moved to angle: ");
-          Serial.println(angle);
           
-          // Gửi phản hồi về trạng thái servo
+          // Gửi phản hồi về trạng thái LED
           doc.clear();
-          doc["type"] = "servo_status";
-          doc["angle"] = angle;
-          
+          doc["type"] = "led_status";
+          doc["status"] = "ON";
           message = "";
           serializeJson(doc, message);
           webSocket.sendTXT(message);
         }
-        else
+        else if (strcmp(value, "OFF") == 0)
         {
-          Serial.println("Invalid servo angle");
+          digitalWrite(LED, LOW);
+          ledState = false;
+          Serial.println("LED turned OFF");
+          
+          // Gửi phản hồi về trạng thái LED
+          doc.clear();
+          doc["type"] = "led_status";
+          doc["status"] = "OFF";
+          message = "";
+          serializeJson(doc, message);
+          webSocket.sendTXT(message);
         }
+      }
+      // Xử lý lệnh GET_STATUS
+      else if (strcmp(command, "GET_STATUS") == 0)
+      {
+        // Gửi trạng thái hiện tại
+        doc.clear();
+        doc["type"] = "status";
+        doc["status"] = "online";
+        doc["device"] = "nodemcu";
+        doc["led"] = ledState ? "ON" : "OFF";
+        
+        message = "";
+        serializeJson(doc, message);
+        webSocket.sendTXT(message);
+        
+        // Gửi thêm dữ liệu cảm biến
+        sendSensorData(lastHongNgoai, lastAnhSang);
       }
     }
     break;
@@ -167,14 +179,12 @@ void setup()
   Serial.begin(115200);
   setup_wifi();
   pinMode(LED, OUTPUT);
+  digitalWrite(LED, LOW); // Khởi tạo LED ở trạng thái tắt
+  ledState = false;
   setUpCamBien();
   
-  // Khởi tạo servo
-  servo1.attach(servo1Pin);
-  servo1.write(90); // Đặt servo về vị trí giữa khi khởi động
-  
-  // Cấu hình WebSocket
-  webSocket.begin(ws_server, ws_port, "/");
+  // Cấu hình WebSocket với đường dẫn mới
+  webSocket.begin(ws_server, ws_port, ws_path);
   webSocket.onEvent(webSocketEvent);
   webSocket.setReconnectInterval(5000);
 
@@ -182,6 +192,8 @@ void setup()
   webSocket.enableHeartbeat(15000, 3000, 2);
 
   sensorTicker.attach(2, readSensors); // Đọc cảm biến mỗi 2 giây
+  
+  Serial.println("NodeMCU started, connecting to WebSocket server at path: " + String(ws_path));
 }
 
 void sendMessage(const char *type, const char *key, const char *value)
@@ -194,6 +206,7 @@ void sendMessage(const char *type, const char *key, const char *value)
 
   doc["type"] = type;
   doc[key] = value;
+  doc["device"] = "nodemcu";
 
   serializeJson(doc, message);
   webSocket.sendTXT(message);
@@ -208,9 +221,11 @@ void sendSensorData(int hongNgoai, int anhSang)
   String message;
 
   doc["type"] = "sensor_data";
+  doc["device"] = "nodemcu";
   doc["motion"] = hongNgoai == HIGH ? "detected" : "none";
   doc["light"] = anhSang;
   doc["is_dark"] = anhSang > troiToi ? true : false;
+  doc["led"] = ledState ? "ON" : "OFF";
 
   serializeJson(doc, message);
   webSocket.sendTXT(message);
@@ -233,5 +248,12 @@ void loop()
     hasNewData = false;
     delay(10);
   }
+  
+  // Kiểm tra kết nối WiFi và kết nối lại nếu cần
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("WiFi connection lost. Reconnecting...");
+    setup_wifi();
+  }
+  
   yield();
 }
